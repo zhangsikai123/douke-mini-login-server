@@ -7,7 +7,7 @@ var axios = require('axios');
 var config = require('./config');
 var WXBizDataCrypt = require('./WXBizDataCrypt');
 var app = express();
-const prefix = 'wx/douke';
+const prefix = '/wx/douke';
 const port = 8081;
 
 // 存储所有用户信息
