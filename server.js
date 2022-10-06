@@ -1,14 +1,14 @@
-var db = require('./db')
-var express = require('express')
-var bodyParser = require('body-parser')
-var path = require('path')
-var session = require('express-session')
-var axios = require('axios')
-var config = require('./config')
-var WXBizDataCrypt = require('./WXBizDataCrypt')
-var app = express()
-
-const port = 8081
+var db = require('./db');
+var express = require('express');
+var bodyParser = require('body-parser');
+var path = require('path');
+var session = require('express-session');
+var axios = require('axios');
+var config = require('./config');
+var WXBizDataCrypt = require('./WXBizDataCrypt');
+var app = express();
+const prefix = 'wx/douke';
+const port = 8081;
 
 // 存储所有用户信息
 const users = {
@@ -43,7 +43,7 @@ app
     next()
   })
 
-  .post('/oauth/login', (req, res) => {
+  .post(prefix + '/oauth/login', (req, res) => {
     var params = req.body;
     var {code, type} = params;
     if (type === 'wxapp') {
@@ -79,7 +79,7 @@ app
     }
   })
 
-  .get('/user/info', (req, res) => {
+  .get(prefix + '/user/info', (req, res) => {
     if (req.user) {
       return res.send({
         code: 0,
@@ -89,7 +89,7 @@ app
     throw new Error('用户未登录');
   })
 
-  .post('/user/bindinfo', (req, res) => {
+  .post(prefix + '/user/bindinfo', (req, res) => {
     var user = req.user;
     if (user) {
       var {encryptedData, iv} = req.body;
@@ -107,7 +107,7 @@ app
     throw new Error('用户未登录');
   })
 
-  .post('/user/bindphone', (req, res) => {
+  .post(prefix + '/user/bindphone', (req, res) => {
     var user = req.user;
     if (user) {
       var {encryptedData, iv} = req.body;
@@ -125,7 +125,7 @@ app
     throw new Error('用户未登录');
   })
 
-  .post('/form', (req, res) => {
+  .post(prefix + '/form', (req, res) => {
     var user = req.user;
     var body = req.body;
     if (user) {
@@ -149,11 +149,11 @@ app
         code: 0
       });
   })
-  .get('/forms', (req, res) => {
+  .get(prefix + '/forms', (req, res) => {
     let forms = db.findAll();
     return res.send({data: forms, code: 0});
   })
-  .get('/form', (req, res) => {
+  .get(prefix + '/form', (req, res) => {
     let form = db.findByID(req.query.id);
     return res.send({data: form, code: 0});
   })
