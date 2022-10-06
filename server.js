@@ -1,3 +1,4 @@
+var db = require('./db')
 var express = require('express')
 var bodyParser = require('body-parser')
 var path = require('path')
@@ -43,8 +44,8 @@ app
   })
 
   .post('/oauth/login', (req, res) => {
-    var params = req.body
-    var {code, type} = params
+    var params = req.body;
+    var {code, type} = params;
     if (type === 'wxapp') {
       axios.get('https://api.weixin.qq.com/sns/jscode2session', {
         params: {
@@ -54,26 +55,27 @@ app
           grant_type: 'authorization_code'
         }
       }).then(({data}) => {
-        var openId = data.openid
-        var user = users[openId]
+        console.log(data);
+        var openId = data.openid;
+        var user = users[openId];
         if (!user) {
           user = {
             openId,
             sessionKey: data.session_key
-          }
-          users[openId] = user
-          console.log('新用户', user)
+          };
+          users[openId] = user;
+          console.log('新用户', user);
         } else {
-          console.log('老用户', user)
+          console.log('老用户', user);
         }
-        req.session.openId = user.openId
+        req.session.openId = user.openId;
       }).then(() => {
         res.send({
           code: 0
-        })
-      })
+        });
+      });
     } else {
-      throw new Error('未知的授权类型')
+      throw new Error('未知的授权类型');
     }
   })
 
@@ -82,55 +84,87 @@ app
       return res.send({
         code: 0,
         data: req.user
-      })
+      });
     }
-    throw new Error('用户未登录')
+    throw new Error('用户未登录');
   })
 
   .post('/user/bindinfo', (req, res) => {
-    var user = req.user
+    var user = req.user;
     if (user) {
-      var {encryptedData, iv} = req.body
-      var pc = new WXBizDataCrypt(config.appId, user.sessionKey)
+      var {encryptedData, iv} = req.body;
+      var pc = new WXBizDataCrypt(config.appId, user.sessionKey);
       try {
-        var data = pc.decryptData(encryptedData, iv)
+        var data = pc.decryptData(encryptedData, iv);
       } catch (err) {
-        throw new Error('session 失效建议重新登录')
+        throw new Error('session 失效建议重新登录');
       }
-      Object.assign(user, data)
+      Object.assign(user, data);
       return res.send({
         code: 0
-      })
+      });
     }
-    throw new Error('用户未登录')
+    throw new Error('用户未登录');
   })
 
   .post('/user/bindphone', (req, res) => {
-    var user = req.user
+    var user = req.user;
     if (user) {
-      var {encryptedData, iv} = req.body
-      var pc = new WXBizDataCrypt(config.appId, user.sessionKey)
+      var {encryptedData, iv} = req.body;
+      var pc = new WXBizDataCrypt(config.appId, user.sessionKey);
       try {
-        var data = pc.decryptData(encryptedData, iv)
+        var data = pc.decryptData(encryptedData, iv);
       } catch (err) {
-        throw new Error('session 失效建议重新登录')
+        throw new Error('session 失效建议重新登录');
       }
-      Object.assign(user, data)
+      Object.assign(user, data);
       return res.send({
         code: 0
-      })
+      });
     }
-    throw new Error('用户未登录')
+    throw new Error('用户未登录');
   })
 
+  .post('/form', (req, res) => {
+    var user = req.user;
+    var body = req.body;
+    if (user) {
+      var form = {'phone': user.phoneNumber, 'user': user.openId};
+      for (let i in body) {
+        var data = body[i];
+        var type = data.original.type;
+        if (type == 'file'){
+          form[i] = data.list;
+        } else if (type == 'date') {
+          form[i] = { 'end': data.endDate, 'start': data.startDate };
+        } else {
+          form[i] = data.value;
+        }
+      };
+      db.save(form);
+    } else {
+      throw new Error('用户未登录');
+    }
+    return res.send({
+        code: 0
+      });
+  })
+  .get('/forms', (req, res) => {
+    let forms = db.findAll();
+    return res.send({data: forms, code: 0});
+  })
+  .get('/form', (req, res) => {
+    let form = db.findByID(req.query.id);
+    return res.send({data: form, code: 0});
+  })
   .use(function (err, req, res, next) {
-    console.log('err', err.message)
+    console.log('err', err.message);
     res.send({
       code: 500,
       message: err.message
-    })
+    });
   })
 
   .listen(port, err => {
-    console.log(`listen on http://localhost:${port}`)
-  })
+    console.log(`listen on http://localhost:${port}`);
+  });
