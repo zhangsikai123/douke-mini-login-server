@@ -160,10 +160,6 @@ app
     } else {
       forms = db.findAll();
     }
-
-    for(let i=0;i<forms.length;i++){
-      forms[i].timestamp = forms[i].timestamp.toLocaleString();
-    }
     return res.send({data: forms, code: 0});
   })
   .get(prefix + '/form', (req, res) => {
