@@ -33,14 +33,14 @@ app
   }))
 
   .use((req, res, next) => {
-    req.user = users[req.session.openId]
-    console.log(`req.url: ${req.url}`)
+    req.user = users[req.session.openId];
+    console.log(`req.url: ${req.url}`);
     if (req.user) {
-      console.log(`wxapp openId`, req.user.openId)
+      console.log(`wxapp openId`, req.user.openId);
     } else {
-      console.log(`session`, req.session.id)
+      console.log(`session`, req.session.id);
     }
-    next()
+    next();
   })
 
   .post(prefix + '/oauth/login', (req, res) => {
@@ -86,7 +86,7 @@ app
         data: req.user
       });
     }
-    throw new Error('用户未登录');
+    throw new Error('获取用户openId失败');
   })
 
   .post(prefix + '/user/bindinfo', (req, res) => {
@@ -104,7 +104,7 @@ app
         code: 0
       });
     }
-    throw new Error('用户未登录');
+    throw new Error('获取用户openId失败');
   })
 
   .post(prefix + '/user/bindphone', (req, res) => {
@@ -122,13 +122,16 @@ app
         code: 0
       });
     }
-    throw new Error('用户未登录');
+    throw new Error('获取用户openId失败');
   })
 
   .post(prefix + '/form', (req, res) => {
     var user = req.user;
     var body = req.body;
     if (user) {
+      if (!user.phoneNumber){
+        return res.send({code:-1, message: '用户未登录'});
+      }
       var form = {'phone': user.phoneNumber, 'user': user.openId};
       for (let i in body) {
         var data = body[i];
@@ -143,14 +146,24 @@ app
       };
       db.save(form);
     } else {
-      throw new Error('用户未登录');
+      throw new Error('获取用户openId失败');
     }
     return res.send({
         code: 0
       });
   })
   .get(prefix + '/forms', (req, res) => {
-    let forms = db.findAll();
+    let phone = req.query.phone;
+    let forms = [];
+    if (phone){
+      forms = db.findByPhone(phone);
+    } else {
+      forms = db.findAll();
+    }
+
+    for(let i=0;i<forms.length;i++){
+      forms[i].timestamp = forms[i].timestamp.toLocaleString();
+    }
     return res.send({data: forms, code: 0});
   })
   .get(prefix + '/form', (req, res) => {
@@ -164,7 +177,6 @@ app
       message: err.message
     });
   })
-
   .listen(port, err => {
     console.log(`listen on http://localhost:${port}`);
   });
