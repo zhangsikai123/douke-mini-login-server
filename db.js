@@ -9,7 +9,8 @@ exports.save = function(form){
 };
 
 exports.findAll = function(form){
-  return forms.reverse();
+  let result = [...forms];
+  return result.reverse();
 };
 
 exports.findByID = function(id){
